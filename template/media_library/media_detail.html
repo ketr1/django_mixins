@@ -1,0 +1,59 @@
+{% extends 'media_library/base.html' %}
+
+{% block title %}{{ media_item.title }} - Медиатека{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <span class="badge {% if media_type == 'book' %}bg-primary{% elif media_type == 'movie' %}bg-success{% else %}bg-info{% endif %}">
+                    {% if media_type == 'book' %}Книга
+                    {% elif media_type == 'movie' %}Фильм
+                    {% else %}Аудиокнига{% endif %}
+                </span>
+                
+                <h1 class="card-title">{{ media_item.title }}</h1>
+                <p class="card-text"><strong>Автор/Режиссер:</strong> {{ media_item.creator }}</p>
+                <p class="card-text"><strong>Дата публикации:</strong> {{ media_item.publication_date }}</p>
+                
+                <!-- Специфичные поля для каждого типа -->
+                {% if media_type == 'book' %}
+                <p class="card-text"><strong>ISBN:</strong> {{ media_item.isbn }}</p>
+                <p class="card-text"><strong>Количество страниц:</strong> {{ media_item.page_count }}</p>
+                {% if media_item.is_borrowed %}
+                <p class="card-text"><strong>Статус:</strong> <span class="badge bg-warning">В аренде у {{ media_item.borrowed_by }}</span></p>
+                {% endif %}
+                
+                {% elif media_type == 'movie' %}
+                <p class="card-text"><strong>Длительность:</strong> {{ media_item.duration }} минут</p>
+                <p class="card-text"><strong>Формат:</strong> {{ media_item.format }}</p>
+                
+                {% elif media_type == 'audiobook' %}
+                <p class="card-text"><strong>Длительность:</strong> {{ media_item.duration }} минут</p>
+                <p class="card-text"><strong>Чтец:</strong> {{ media_item.narrator }}</p>
+                {% if media_item.is_borrowed %}
+                <p class="card-text"><strong>Статус:</strong> <span class="badge bg-warning">В аренде у {{ media_item.borrowed_by }}</span></p>
+                {% endif %}
+                {% endif %}
+                
+                <div class="mt-4">
+                    <h4>Действия:</h4>
+                    <div class="action-buttons">
+                        {% for action_code, action_name, btn_class in available_actions %}
+                        <button onclick="performAction('{{ media_type }}', {{ media_item.id }}, '{{ action_code }}')" 
+                                class="btn {{ btn_class }} me-2 mb-2">
+                            {{ action_name }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'media_library:media_list' %}" class="btn btn-outline-secondary">← Назад к списку</a>
+</div>
+{% endblock %}

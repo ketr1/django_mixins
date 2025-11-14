@@ -1,0 +1,100 @@
+{% extends 'media_library/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Медиатека</h1>
+        
+        <!-- Книги -->
+        <h2 class="mt-5">Книги</h2>
+        <div class="row">
+            {% for book in books %}
+            <div class="col-md-4">
+                <div class="card media-card">
+                    <div class="card-body">
+                        <span class="badge bg-primary media-badge">Книга</span>
+                        <h5 class="card-title">{{ book.title }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">Автор: {{ book.creator }}</small><br>
+                            <small class="text-muted">Страниц: {{ book.page_count }}</small>
+                        </p>
+                        <div class="action-buttons">
+                            <a href="{% url 'media_library:media_detail' pk=book.pk %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                            {% if not book.is_borrowed %}
+                            <button onclick="performAction('book', {{ book.id }}, 'borrow')" class="btn btn-sm btn-success">Взять</button>
+                            {% else %}
+                            <span class="badge bg-warning">В аренде</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <p class="text-muted">Книги не найдены</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Фильмы -->
+        <h2 class="mt-5">Фильмы</h2>
+        <div class="row">
+            {% for movie in movies %}
+            <div class="col-md-4">
+                <div class="card media-card">
+                    <div class="card-body">
+                        <span class="badge bg-success media-badge">Фильм</span>
+                        <h5 class="card-title">{{ movie.title }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">Режиссер: {{ movie.creator }}</small><br>
+                            <small class="text-muted">Длительность: {{ movie.duration }} мин.</small>
+                        </p>
+                        <div class="action-buttons">
+                            <a href="{% url 'media_library:media_detail' pk=movie.pk %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                            <button onclick="performAction('movie', {{ movie.id }}, 'download')" class="btn btn-sm btn-secondary">Скачать</button>
+                            <button onclick="performAction('movie', {{ movie.id }}, 'play_trailer')" class="btn btn-sm btn-warning">Трейлер</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <p class="text-muted">Фильмы не найдены</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Аудиокниги -->
+        <h2 class="mt-5">Аудиокниги</h2>
+        <div class="row">
+            {% for audiobook in audiobooks %}
+            <div class="col-md-4">
+                <div class="card media-card">
+                    <div class="card-body">
+                        <span class="badge bg-info media-badge">Аудиокнига</span>
+                        <h5 class="card-title">{{ audiobook.title }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">Автор: {{ audiobook.creator }}</small><br>
+                            <small class="text-muted">Чтец: {{ audiobook.narrator }}</small>
+                        </p>
+                        <div class="action-buttons">
+                            <a href="{% url 'media_library:media_detail' pk=audiobook.pk %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                            <button onclick="performAction('audiobook', {{ audiobook.id }}, 'download')" class="btn btn-sm btn-secondary">Скачать</button>
+                            {% if not audiobook.is_borrowed %}
+                            <button onclick="performAction('audiobook', {{ audiobook.id }}, 'borrow')" class="btn btn-sm btn-success">Взять</button>
+                            {% else %}
+                            <span class="badge bg-warning">В аренде</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <p class="text-muted">Аудиокниги не найдены</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
