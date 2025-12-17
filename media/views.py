@@ -2,6 +2,10 @@
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.generic import ListView, DetailView, TemplateView
+from .forms import MediaForm
+from .models import Book, AudioBook, Movie
+from .services import MediaFactory
+
 
 from .forms import MediaForm
 from .models import Book, AudioBook
@@ -13,16 +17,23 @@ class MediaListView(ListView):
     context_object_name = 'media_items'
 
     def get_queryset(self):
-        books = list(Book.objects.all())
-        audiobooks = list(AudioBook.objects.all())
-        return books + audiobooks
+        query = self.request.GET.get('q', '')
+        movies = Movie.objects.all()
+        if query:
+            movies = movies.filter(models.Q(director__icontains=query) | models.Q(genre__icontains=query))
+        books = Book.objects.all()
+        audiobooks = AudioBook.objects.all()
+        return list(books) + list(audiobooks) + list(movies)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Группируем по типам для отображения
         context['books'] = Book.objects.all()
         context['audiobooks'] = AudioBook.objects.all()
+        context['movies'] = Movie.objects.all()
+        context['query'] = self.request.GET.get('q', '')
         return context
+
+
 
 
 class MediaDetailView(DetailView):
@@ -76,7 +87,10 @@ class MediaDetailView(DetailView):
             return 'book'
         elif isinstance(media_item, AudioBook):
             return 'audiobook'
+        elif isinstance(media_item, Movie): 
+            return 'movie'
         return 'unknown'
+
 
 
 class MediaCreateView(TemplateView):
@@ -96,26 +110,29 @@ class MediaCreateView(TemplateView):
 
 
 def media_action(request, media_type, item_id):
-    # Используем фабрику для получения класса медиа
     media_class = MediaFactory.get_media_class(media_type)
     if not media_class:
         return JsonResponse({'error': 'Неизвестный тип медиа'}, status=400)
 
-    # Диспетчеризация через словарь
     action_handlers = {
-        'book': {
-            'describe': lambda obj: obj.get_description(),
-            'read': lambda obj: obj.read_sample(),
-            'borrow': lambda obj: obj.borrow(request.user.username if request.user.is_authenticated else 'Гость'),
-            'download': lambda obj: "Книги недоступны для скачивания",
-        },
-        'audiobook': {
-            'describe': lambda obj: obj.get_description(),
-            'download': lambda obj: obj.download(),
-            'borrow': lambda obj: obj.borrow(request.user.username if request.user.is_authenticated else 'Гость'),
-            'play_trailer': lambda obj: "Аудиокниги не имеют трейлеров",
-        }
+    'book': {
+        'describe': lambda obj: obj.get_description(),
+        'read': lambda obj: obj.read_sample(),
+        'borrow': lambda obj: obj.borrow(request.user.username if request.user.is_authenticated else 'Гость'),
+        'download': lambda obj: "Книги недоступны для скачивания",
+    },
+    'audiobook': {
+        'describe': lambda obj: obj.get_description(),
+        'download': lambda obj: obj.download(),
+        'borrow': lambda obj: obj.borrow(request.user.username if request.user.is_authenticated else 'Гость'),
+        'play_trailer': lambda obj: "Аудиокниги не имеют трейлеров",
+    },
+    'movie': {
+        'describe': lambda obj: obj.get_description(),
+        'play_trailer': lambda obj: obj.play_trailer(),
+        'download': lambda obj: obj.download(),
     }
+}
 
     action = request.POST.get('action', 'describe')
 

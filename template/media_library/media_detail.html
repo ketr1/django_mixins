@@ -17,34 +17,32 @@
                 <p class="card-text"><strong>Автор/Режиссер:</strong> {{ media_item.creator }}</p>
                 <p class="card-text"><strong>Дата публикации:</strong> {{ media_item.publication_date }}</p>
                 
-                <!-- Специфичные поля для каждого типа -->
                 {% if media_type == 'book' %}
-                <p class="card-text"><strong>ISBN:</strong> {{ media_item.isbn }}</p>
-                <p class="card-text"><strong>Количество страниц:</strong> {{ media_item.page_count }}</p>
-                {% if media_item.is_borrowed %}
-                <p class="card-text"><strong>Статус:</strong> <span class="badge bg-warning">В аренде у {{ media_item.borrowed_by }}</span></p>
-                {% endif %}
-                
+                    <p class="card-text"><strong>ISBN:</strong> {{ media_item.isbn }}</p>
+                    <p class="card-text"><strong>Количество страниц:</strong> {{ media_item.page_count }}</p>
+                    {% if media_item.is_borrowed %}
+                        <p class="card-text"><strong>Статус:</strong> <span class="badge bg-warning">В аренде у {{ media_item.borrowed_by }}</span></p>
+                    {% endif %}
                 {% elif media_type == 'movie' %}
-                <p class="card-text"><strong>Длительность:</strong> {{ media_item.duration }} минут</p>
-                <p class="card-text"><strong>Формат:</strong> {{ media_item.format }}</p>
-                
+                    <p class="card-text"><strong>Длительность:</strong> {{ media_item.duration }} минут</p>
+                    <p class="card-text"><strong>Формат:</strong> {{ media_item.format }}</p>
+                    <p class="card-text"><strong>Режиссёр:</strong> {{ media_item.director }}</p>
                 {% elif media_type == 'audiobook' %}
-                <p class="card-text"><strong>Длительность:</strong> {{ media_item.duration }} минут</p>
-                <p class="card-text"><strong>Чтец:</strong> {{ media_item.narrator }}</p>
-                {% if media_item.is_borrowed %}
-                <p class="card-text"><strong>Статус:</strong> <span class="badge bg-warning">В аренде у {{ media_item.borrowed_by }}</span></p>
-                {% endif %}
+                    <p class="card-text"><strong>Длительность:</strong> {{ media_item.duration }} минут</p>
+                    <p class="card-text"><strong>Чтец:</strong> {{ media_item.narrator }}</p>
+                    {% if media_item.is_borrowed %}
+                        <p class="card-text"><strong>Статус:</strong> <span class="badge bg-warning">В аренде у {{ media_item.borrowed_by }}</span></p>
+                    {% endif %}
                 {% endif %}
                 
                 <div class="mt-4">
                     <h4>Действия:</h4>
                     <div class="action-buttons">
                         {% for action_code, action_name, btn_class in available_actions %}
-                        <button onclick="performAction('{{ media_type }}', {{ media_item.id }}, '{{ action_code }}')" 
-                                class="btn {{ btn_class }} me-2 mb-2">
-                            {{ action_name }}
-                        </button>
+                            <button onclick="performAction('{{ media_type }}', {{ media_item.id }}, '{{ action_code }}')" 
+                                    class="btn {{ btn_class }} me-2 mb-2">
+                                {{ action_name }}
+                            </button>
                         {% endfor %}
                     </div>
                 </div>
@@ -56,4 +54,45 @@
 <div class="mt-3">
     <a href="{% url 'media_library:media_list' %}" class="btn btn-outline-secondary">← Назад к списку</a>
 </div>
+
+<script>
+function performAction(mediaType, itemId, action) {
+    fetch(`/media/${mediaType}/${itemId}/action/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: new URLSearchParams({ action: action })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert("Ошибка: " + data.error);
+        } else {
+            alert(data.result);
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка выполнения:', error);
+        alert("Ошибка при выполнении действия.");
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
 {% endblock %}

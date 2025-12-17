@@ -1,17 +1,12 @@
 from django.db import models
-
-# Create your models here.
-
-from django.db import models
-
-from media.mixins import BorrowableMixin, DownloadableMixin
+from media.mixins import BorrowableMixin, DownloadableMixin, ReviewableMixin, StreamableMixin
 
 
 class MediaItem(models.Model):
     title = models.CharField(max_length=200)
     creator = models.CharField(max_length=100)
     publication_date = models.DateField()
-    _internal_id = models.CharField(max_length=50, blank=True)  # инкапсуляция
+    _internal_id = models.CharField(max_length=50, blank=True)
 
     class Meta:
         abstract = True
@@ -21,6 +16,9 @@ class MediaItem(models.Model):
 
     def _generate_internal_id(self):
         return f"MEDIA_{self.title[:5].upper()}"
+    
+    def get_media_type(self):
+        return self.__class__.__name__.lower()
 
 
 
@@ -39,18 +37,19 @@ class Book(BorrowableMixin, MediaItem):
     def get_media_type(self):
         return "book"
 
-class Movie(DownloadableMixin, MediaItem):
-    duration = models.IntegerField()
-    format = models.CharField(max_length=10)
 
-    def get_description(self):  # полиморфизм
-        return f"Фильм '{self.title}' режиссера {self.creator}, {self.duration} мин."
+class Movie(DownloadableMixin, StreamableMixin, ReviewableMixin, MediaItem):
+    duration = models.IntegerField(help_text="Длительность в минутах")
+    format = models.CharField(max_length=10)
+    director = models.CharField(max_length=100)
+    genre = models.CharField(max_length=50, default="Не указан")
+
+    def get_description(self):
+        return f"Фильм '{self.title}' режиссера {self.director} ({self.genre}), {self.duration} мин."
 
     def play_trailer(self):
         return f"Воспроизведение трейлера фильма '{self.title}'"
 
-    def get_media_type(self):
-        return "movie"
 
 class AudioBook(DownloadableMixin, BorrowableMixin, MediaItem):
     duration = models.IntegerField()
